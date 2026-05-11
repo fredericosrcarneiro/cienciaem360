@@ -1,0 +1,203 @@
+
+<h2 class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Painel interativo de funções e cronograma dos bolsistas ICT docentes do projeto Ciência em 360°.</h2>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans,sans-serif)}
+.root{font-size:14px;color:var(--color-text-primary);padding:0 0 2rem}
+.header{background:#0d5e4a;color:#e1f5ee;padding:1rem 1.25rem;border-radius:var(--border-radius-lg);margin-bottom:1.25rem}
+.header-title{font-size:13px;font-weight:500;color:#a8e8d0;letter-spacing:.04em;text-transform:uppercase;margin-bottom:.2rem}
+.header-sub{font-size:11px;color:#6dcfb0}
+.nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.5rem;margin-bottom:1.25rem}
+.nav-btn{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:.6rem .75rem;cursor:pointer;text-align:left;transition:border-color .15s,background .15s;display:flex;flex-direction:column;gap:.2rem}
+.nav-btn:hover{border-color:var(--color-border-secondary);background:var(--color-background-secondary)}
+.nav-btn.active{border:1.5px solid #1d9e75;background:#e1f5ee}
+.nav-initials{width:28px;height:28px;border-radius:50%;background:#b0dfd0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:#0d5e4a;margin-bottom:.3rem}
+.nav-btn.active .nav-initials{background:#1d9e75;color:#e1f5ee}
+.nav-name{font-size:11px;font-weight:500;color:var(--color-text-primary);line-height:1.3}
+.nav-resp{font-size:10px;color:var(--color-text-secondary)}
+.nav-btn.active .nav-resp{color:#0f6e56}
+.panel{display:none}
+.panel.visible{display:block}
+.section-label{font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-secondary);margin-bottom:.65rem;padding-bottom:.3rem;border-bottom:0.5px solid var(--color-border-tertiary)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1.1rem}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:.85rem 1rem}
+.act-list{list-style:none}
+.act-item{display:flex;align-items:flex-start;gap:.5rem;padding:.35rem 0;border-bottom:0.5px solid var(--color-border-tertiary)}
+.act-item:last-child{border-bottom:none}
+.act-code{font-size:11px;font-weight:500;min-width:32px;color:#0d5e4a}
+.act-desc{font-size:11px;color:var(--color-text-secondary);line-height:1.45;flex:1}
+.act-months{font-size:10px;color:#1d9e75;white-space:nowrap;margin-left:.25rem}
+.badge{display:inline-block;font-size:10px;padding:1px 6px;border-radius:3px;font-weight:500;vertical-align:middle}
+.badge-resp{background:#0d5e4a;color:#e1f5ee}
+.badge-part{background:#e1f5ee;color:#0f6e56}
+.gantt-wrap{overflow-x:auto}
+.gantt{width:100%;border-collapse:collapse;font-size:11px}
+.gantt th{font-size:10px;font-weight:500;color:var(--color-text-secondary);text-align:center;padding:4px 2px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.gantt td.act-name{font-size:11px;color:var(--color-text-secondary);padding:3px 8px 3px 0;white-space:nowrap}
+.gantt td.cell{padding:2px 2px;text-align:center}
+.bar{width:100%;height:12px;border-radius:3px;background:var(--color-background-secondary)}
+.bar.resp{background:#0d5e4a}
+.bar.part{background:#9fe1cb}
+.legend{display:flex;gap:1rem;margin-bottom:.75rem;align-items:center}
+.legend-item{display:flex;align-items:center;gap:.35rem;font-size:11px;color:var(--color-text-secondary)}
+.leg-swatch{width:16px;height:10px;border-radius:2px}
+.profile-top{display:flex;align-items:center;gap:.85rem;margin-bottom:.85rem}
+.avatar-lg{width:44px;height:44px;border-radius:50%;background:#1d9e75;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;color:#e1f5ee;flex-shrink:0}
+.profile-name{font-size:15px;font-weight:500;color:var(--color-text-primary)}
+.profile-role{font-size:12px;color:var(--color-text-secondary);margin-top:.15rem}
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:1.1rem}
+.stat-card{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:.6rem .75rem;text-align:center}
+.stat-num{font-size:20px;font-weight:500;color:#0d5e4a}
+.stat-label{font-size:10px;color:var(--color-text-secondary);margin-top:.15rem;line-height:1.3}
+</style>
+
+<div class="root">
+
+<div class="header">
+  <div class="header-title">Ciência em 360° · Bolsistas ICT Docentes</div>
+  <div class="header-sub">Selecione um bolsista para ver suas responsabilidades e cronograma de atividades</div>
+</div>
+
+<div class="nav" id="nav"></div>
+
+<div id="panels"></div>
+
+</div>
+
+<script>
+const ALL_ACTS = [
+  {code:"A-1",desc:"Seleção dos espaços de gravação alinhados ao Currículo do ES",months:[1,2]},
+  {code:"A-2",desc:"Organização e agendamento dos espaços de visitação",months:[1,2]},
+  {code:"A-3",desc:"Lista de locais de relevância científica, histórica e tecnológica",months:[1,2]},
+  {code:"A-4",desc:"Roteiros preliminares elaborados pelos estudantes",months:[2,3]},
+  {code:"A-5",desc:"Instrumentos de avaliação do processo de aprendizagem (rubricas, fichas, relatórios)",months:[3,10]},
+  {code:"A-6",desc:"Registros de validação científica pelos professores orientadores",months:[3,10]},
+  {code:"A-7",desc:"Capacitação dos alunos para gravação e edição em 360°",months:[3,6]},
+  {code:"A-8",desc:"Produção de vídeos-piloto no formato proposto",months:[3,6]},
+  {code:"A-9",desc:"Fichas de observação e coleta de informações em campo",months:[5,9]},
+  {code:"A-10",desc:"Relatório de acompanhamento técnico e científico",months:[5,10]},
+  {code:"A-11",desc:"Organização e armazenamento do material coletado",months:[5,10]},
+  {code:"A-12",desc:"Versões finais dos roteiros e vídeos com conceitos validados",months:[5,10]},
+  {code:"A-13",desc:"Avaliação pedagógica do material gravado",months:[5,10]},
+  {code:"A-14",desc:"Registros fotográficos e audiovisuais em campo",months:[5,10]},
+  {code:"A-15",desc:"Registros reflexivos dos estudantes (pré-visita, visita e pós-visita)",months:[6,10]},
+  {code:"A-16",desc:"Descrições pedagógicas para cada vídeo produzido",months:[8,10]},
+  {code:"A-17",desc:"Criação e organização do acervo digital de vídeos",months:[8,10]},
+  {code:"A-18",desc:"Plano de divulgação dos vídeos",months:[8,10]},
+  {code:"A-19",desc:"Organização do acervo audiovisual final validado",months:[9,10]},
+  {code:"A-20",desc:"Vídeos publicados na plataforma digital",months:[9,12]},
+];
+
+const MEMBERS = [
+  {
+    initials:"FC",
+    name:"Frederico de Souza Ramos Carneiro",
+    inst:"SEDU",
+    resp:["A-2","A-4","A-8","A-12","A-14","A-16","A-18"],
+    part:["A-1","A-3","A-5","A-6","A-7","A-9","A-10","A-11","A-13","A-15","A-17","A-19","A-20"],
+    focus:"Coordenação de visitações, roteirização e validação final dos vídeos"
+  },
+  {
+    initials:"EA",
+    name:"Elisângela da Silva Amorim",
+    inst:"SEDU",
+    resp:["A-6","A-10","A-13","A-15","A-17","A-20"],
+    part:["A-1","A-2","A-3","A-4","A-5","A-7","A-8","A-9","A-11","A-12","A-14","A-16","A-18","A-19"],
+    focus:"Validação científica, avaliação pedagógica e publicação final do acervo"
+  },
+  {
+    initials:"DL",
+    name:"Davi Marcio Bermudes Lino",
+    inst:"SEDU",
+    resp:["A-9","A-11"],
+    part:["A-1","A-2","A-3","A-4","A-7","A-8","A-17","A-18","A-19"],
+    focus:"Coleta e organização do material de campo e acervo digital"
+  },
+  {
+    initials:"BB",
+    name:"Beatriz Ferreira Figueiredo de Bueno",
+    inst:"—",
+    resp:["A-3","A-7","A-19"],
+    part:["A-1","A-2","A-4","A-11","A-17"],
+    focus:"Mapeamento de locais, capacitação dos alunos e organização do acervo final"
+  },
+];
+
+const nav = document.getElementById('nav');
+const panels = document.getElementById('panels');
+
+MEMBERS.forEach((m,idx)=>{
+  const btn = document.createElement('button');
+  btn.className = 'nav-btn'+(idx===0?' active':'');
+  btn.innerHTML = `<div class="nav-initials">${m.initials}</div><div class="nav-name">${m.name.split(' ').slice(0,2).join(' ')}</div><div class="nav-resp">${m.resp.length} responsável · ${m.part.length} participante</div>`;
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('visible'));
+    document.getElementById('panel-'+idx).classList.add('visible');
+  });
+  nav.appendChild(btn);
+
+  const allActCodes = [...m.resp,...m.part];
+  const myActs = ALL_ACTS.filter(a=>allActCodes.includes(a.code));
+
+  let respRows = m.resp.map(code=>{
+    const a = ALL_ACTS.find(x=>x.code===code);
+    return `<li class="act-item"><span class="act-code">${a.code}</span><span class="act-desc">${a.desc}</span><span class="act-months">M${a.months[0]}–${a.months[1]}</span></li>`;
+  }).join('');
+
+  let partRows = m.part.map(code=>{
+    const a = ALL_ACTS.find(x=>x.code===code);
+    return `<li class="act-item"><span class="act-code" style="color:var(--color-text-secondary)">${a.code}</span><span class="act-desc">${a.desc}</span><span class="act-months">M${a.months[0]}–${a.months[1]}</span></li>`;
+  }).join('');
+
+  let ganttRows = '';
+  myActs.forEach(a=>{
+    const isResp = m.resp.includes(a.code);
+    let cells = `<td class="act-name"><strong>${a.code}</strong></td>`;
+    for(let mo=1;mo<=12;mo++){
+      const active = mo>=a.months[0]&&mo<=a.months[1];
+      cells += `<td class="cell"><div class="bar${active?(isResp?' resp':' part'):''}"></div></td>`;
+    }
+    ganttRows += `<tr>${cells}</tr>`;
+  });
+
+  const panel = document.createElement('div');
+  panel.className = 'panel'+(idx===0?' visible':'');
+  panel.id = 'panel-'+idx;
+  panel.innerHTML = `
+    <div class="card" style="margin-bottom:1rem">
+      <div class="profile-top">
+        <div class="avatar-lg">${m.initials}</div>
+        <div>
+          <div class="profile-name">${m.name}</div>
+          <div class="profile-role">ICT Docente · ${m.inst} · Bolsa: 10 meses · R$ 900/mês</div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--color-text-secondary);padding:.5rem 0 .75rem;border-top:0.5px solid var(--color-border-tertiary);border-bottom:0.5px solid var(--color-border-tertiary);margin-bottom:.75rem">${m.focus}</div>
+      <div class="stat-row">
+        <div class="stat-card"><div class="stat-num">${m.resp.length}</div><div class="stat-label">atividades como responsável</div></div>
+        <div class="stat-card"><div class="stat-num">${m.part.length}</div><div class="stat-label">atividades como participante</div></div>
+        <div class="stat-card"><div class="stat-num">${m.resp.length+m.part.length}</div><div class="stat-label">total de atividades</div></div>
+      </div>
+    </div>
+    <div class="section-label">Atividades sob sua responsabilidade</div>
+    <div class="card" style="margin-bottom:1rem"><ul class="act-list">${respRows}</ul></div>
+    <div class="section-label">Atividades como participante</div>
+    <div class="card" style="margin-bottom:1rem"><ul class="act-list">${partRows}</ul></div>
+    <div class="section-label">Cronograma individual (12 meses)</div>
+    <div class="legend">
+      <div class="legend-item"><div class="leg-swatch" style="background:#0d5e4a"></div>Responsável</div>
+      <div class="legend-item"><div class="leg-swatch" style="background:#9fe1cb"></div>Participante</div>
+    </div>
+    <div class="card gantt-wrap">
+      <table class="gantt">
+        <thead><tr><th style="text-align:left;padding-left:0">Ativ.</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10</th><th>11</th><th>12</th></tr></thead>
+        <tbody>${ganttRows}</tbody>
+      </table>
+    </div>
+  `;
+  panels.appendChild(panel);
+});
+</script>
